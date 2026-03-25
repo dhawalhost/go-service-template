@@ -29,6 +29,7 @@ type svc struct {
 	log   *zap.Logger
 }
 
+// New creates a new Service instance with the given dependencies.
 func New(repo repository.Repository, cache cache.Cache, log *zap.Logger) Service {
 	return &svc{repo: repo, cache: cache, log: log}
 }

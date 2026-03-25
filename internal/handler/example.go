@@ -35,7 +35,7 @@ func tenantID(r *http.Request) string {
 	return tid
 }
 
-// List handles GET /api/v1/examples
+// List handles GET /api/v1/examples.
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	reqID := middleware.RequestIDFromContext(r.Context())
 	tid := tenantID(r)
@@ -56,7 +56,7 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	response.Paginated(w, r, items, params.ToPagination(total))
 }
 
-// Get handles GET /api/v1/examples/{id}
+// Get handles GET /api/v1/examples/{id}.
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	reqID := middleware.RequestIDFromContext(r.Context())
 	tid := tenantID(r)
@@ -72,7 +72,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	response.Ok(w, r, item)
 }
 
-// Create handles POST /api/v1/examples
+// Create handles POST /api/v1/examples.
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	reqID := middleware.RequestIDFromContext(r.Context())
 	tid := tenantID(r)
@@ -101,7 +101,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	response.Created(w, r, item)
 }
 
-// Update handles PUT /api/v1/examples/{id}
+// Update handles PUT /api/v1/examples/{id}.
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	reqID := middleware.RequestIDFromContext(r.Context())
 	tid := tenantID(r)
@@ -131,7 +131,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	response.Ok(w, r, item)
 }
 
-// Delete handles DELETE /api/v1/examples/{id}
+// Delete handles DELETE /api/v1/examples/{id}.
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	reqID := middleware.RequestIDFromContext(r.Context())
 	tid := tenantID(r)

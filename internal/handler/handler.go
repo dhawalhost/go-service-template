@@ -13,6 +13,7 @@ type Handler struct {
 	log *zap.Logger
 }
 
+// New creates a new Handler instance with the given dependencies.
 func New(svc service.Service, log *zap.Logger) *Handler {
 	return &Handler{svc: svc, log: log}
 }

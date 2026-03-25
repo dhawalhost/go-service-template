@@ -8,6 +8,7 @@ type Config struct {
 	kitconfig.Config `mapstructure:",squash"`
 }
 
+// Load reads config from environment variables and/or a YAML file.
 func Load() (*Config, error) {
 	base, err := kitconfig.Load("")
 	if err != nil {
@@ -16,6 +17,7 @@ func Load() (*Config, error) {
 	return &Config{Config: *base}, nil
 }
 
+// MustLoad is a helper that panics on config load error, for use in main() where we want to fail fast.
 func MustLoad() *Config {
 	cfg, err := Load()
 	if err != nil {
