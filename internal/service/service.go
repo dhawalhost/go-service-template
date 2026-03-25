@@ -102,12 +102,8 @@ func (s *svc) Update(ctx context.Context, tenantID, id string, req UpdateRequest
 		return nil, err
 	}
 
-	if req.Name != "" {
-		row.Name = req.Name
-	}
-	if req.Description != "" {
-		row.Description = req.Description
-	}
+	row.Name = req.Name
+	row.Description = req.Description
 
 	if err := s.repo.Update(ctx, row); err != nil {
 		return nil, err

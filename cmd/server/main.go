@@ -24,14 +24,14 @@ import (
 )
 
 func main() {
-	// Step 1: handle OS signals for graceful shutdown
+	// Handle OS signals for graceful shutdown.
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	// Step 2: load config from env vars / yaml
+	// Load config from env vars / yaml.
 	cfg := svcconfig.MustLoad()
 
-	// Step 3: init structured logger
+	// Init structured logger.
 	log, err := logger.New(cfg.Log.Level, cfg.Log.Development)
 	if err != nil {
 		panic(err)
@@ -39,25 +39,25 @@ func main() {
 	logger.SetGlobal(log)
 	defer log.Sync() //nolint:errcheck
 
-	// Step 4: init database (GORM + pgxpool from same DSN)
+	// Init database (GORM + pgxpool from same DSN).
 	db, err := database.New(ctx, cfg.Database)
 	if err != nil {
 		log.Fatal("failed to connect to database", zap.Error(err))
 	}
 	defer db.Close() //nolint:errcheck
 
-	// Step 5: run SQL migrations
+	// Run SQL migrations.
 	if err := database.RunMigrations(ctx, cfg.Database.DSN, cfg.Database.MigrationsPath); err != nil {
 		log.Fatal("failed to run migrations", zap.Error(err))
 	}
 
-	// Step 6: init Redis cache
+	// Init Redis cache.
 	redisCache, err := cache.NewRedis(cfg.Redis)
 	if err != nil {
 		log.Fatal("failed to connect to redis", zap.Error(err))
 	}
 
-	// Step 7: init observability (Prometheus metrics + OTel tracing)
+	// Init observability (Prometheus metrics + OTel tracing).
 	observability.InitMetrics(cfg.Telemetry.ServiceName)
 	if cfg.Telemetry.Enabled {
 		shutdownTracer, err := observability.InitTracer(ctx, cfg.Telemetry)
@@ -68,17 +68,17 @@ func main() {
 		}
 	}
 
-	// Step 8: wire dependency graph (repo -> service -> handler)
+	// Wire dependency graph: repo -> service -> handler.
 	repo := repository.NewPostgres(db.GORM)
 	svc := service.New(repo, redisCache, log)
 	h := handler.New(svc, log)
 
-	// Step 9: set up health checks
+	// Set up health checks.
 	healthHandler := health.NewHandler()
 	healthHandler.Register("database", db)
 	healthHandler.Register("redis", redisCache)
 
-	// Step 10: build HTTP server
+	// Build HTTP server.
 	srv := server.New(
 		server.WithAddr(cfg.Server.Addr),
 		server.WithReadTimeout(cfg.Server.ReadTimeout),
@@ -87,7 +87,7 @@ func main() {
 		server.WithShutdownTimeout(cfg.Server.ShutdownTimeout),
 	)
 
-	// Step 11: register global middleware on the server's router
+	// Register global middleware.
 	srv.Use(
 		middleware.RequestID(),
 		middleware.TenantID(),
@@ -98,12 +98,12 @@ func main() {
 		observability.Metrics(),
 	)
 
-	// Step 12: mount unauthenticated routes
+	// Mount unauthenticated routes.
 	srv.Mount("/health/live", healthHandler.LiveHandler())
 	srv.Mount("/health/ready", healthHandler.ReadyHandler())
 	srv.Mount("/metrics", observability.MetricsHandler())
 
-	// Step 13: mount authenticated + rate-limited service routes.
+	// Mount authenticated + rate-limited service routes.
 	// Use an in-memory store for rate limiting (swap for ratelimit.NewRedisStore for
 	// distributed rate limiting in production).
 	rateLimitStore := ratelimit.NewInMemoryStore()
@@ -118,7 +118,6 @@ func main() {
 		ContextKey: "claims",
 	})(h.Router())))
 
-	// Step 14: start HTTP server
 	log.Info("starting server", zap.String("addr", cfg.Server.Addr))
 	if err := srv.Run(ctx); err != nil {
 		log.Fatal("server exited with error", zap.Error(err))

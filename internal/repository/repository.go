@@ -7,14 +7,25 @@ import (
 	"gorm.io/gorm"
 )
 
-// Repository defines the data access interface.
+// Reader defines read-only data access methods.
 // RENAME_ME: rename Example to your entity name.
-type Repository interface {
+type Reader interface {
 	List(ctx context.Context, tenantID string, params ListParams) ([]Example, int64, error)
 	GetByID(ctx context.Context, tenantID, id string) (*Example, error)
+}
+
+// Writer defines write data access methods.
+// RENAME_ME: rename Example to your entity name.
+type Writer interface {
 	Create(ctx context.Context, example *Example) error
 	Update(ctx context.Context, example *Example) error
 	Delete(ctx context.Context, tenantID, id string) error
+}
+
+// Repository combines Reader and Writer into a single data access interface.
+type Repository interface {
+	Reader
+	Writer
 }
 
 // ListParams holds pagination and filter parameters.
