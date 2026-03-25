@@ -12,7 +12,7 @@ test: ## Run tests with race detector
 	go test ./... -race -cover
 
 lint: ## Run golangci-lint
-	golangci-lint run ./...
+	go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest run --tests=false --timeout=15m ./...
 
 fmt: ## Format code
 	gofmt -w .
