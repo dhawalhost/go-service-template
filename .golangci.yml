@@ -1,6 +1,4 @@
-run:
-  timeout: 5m
-  go: "1.25"
+version: "2"
 
 linters:
   enable:
@@ -9,13 +7,20 @@ linters:
     - govet
     - staticcheck
     - revive
-    - gofmt
-    - goimports
     - unparam
     - bodyclose
-    - noctx
-    - prealloc
+    - misspell
+    - godot
 
-linters-settings:
-  goimports:
-    local-prefixes: github.com/dhawalhost/go-service-template
+  settings:
+    revive:
+      rules:
+        - name: exported
+          severity: warning
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - gosec
+        - errcheck
