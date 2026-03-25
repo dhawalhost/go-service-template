@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 
 	gokiterrors "github.com/dhawalhost/gokit/errors"
 	"gorm.io/gorm"
@@ -47,7 +48,7 @@ func (r *postgresRepo) GetByID(ctx context.Context, tenantID, id string) (*Examp
 		Where("id = ? AND tenant_id = ?", id, tenantID).
 		First(&row).Error
 
-	if err == gorm.ErrRecordNotFound {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, gokiterrors.NotFound("EXAMPLE_NOT_FOUND", "example not found")
 	}
 	if err != nil {

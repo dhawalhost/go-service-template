@@ -8,6 +8,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/dhawalhost/gokit/cache"
+	"github.com/dhawalhost/gokit/idgen"
 
 	"github.com/dhawalhost/go-service-template/internal/repository"
 )
@@ -81,6 +82,7 @@ func (s *svc) Get(ctx context.Context, tenantID, id string) (*Example, error) {
 
 func (s *svc) Create(ctx context.Context, tenantID string, req CreateRequest) (*Example, error) {
 	row := &repository.Example{
+		ID:          idgen.NewUUIDv7(),
 		Name:        req.Name,
 		Description: req.Description,
 		TenantID:    tenantID,

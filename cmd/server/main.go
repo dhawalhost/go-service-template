@@ -6,7 +6,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 
 	"github.com/dhawalhost/gokit/cache"
@@ -15,7 +14,7 @@ import (
 	"github.com/dhawalhost/gokit/logger"
 	"github.com/dhawalhost/gokit/middleware"
 	"github.com/dhawalhost/gokit/observability"
-	"github.com/dhawalhost/gokit/router"
+	"github.com/dhawalhost/gokit/ratelimit"
 	"github.com/dhawalhost/gokit/server"
 
 	svcconfig "github.com/dhawalhost/go-service-template/config"
@@ -79,40 +78,7 @@ func main() {
 	healthHandler.Register("database", db)
 	healthHandler.Register("redis", redisCache)
 
-	// Step 10: build chi router with global middleware
-	r := router.New()
-	r.Use(
-		middleware.RequestID(),
-		middleware.SecureHeaders(),
-		middleware.Logger(log),
-		middleware.Recovery(log),
-		middleware.CORS([]string{"*"}),
-		observability.Metrics(),
-	)
-
-	// Step 11: mount unauthenticated routes
-	r.Get("/health/live", healthHandler.LiveHandler())
-	r.Get("/health/ready", healthHandler.ReadyHandler())
-	r.Handle("/metrics", observability.MetricsHandler())
-
-	// Step 12: mount authenticated + rate-limited service routes
-	r.Group(func(r chi.Router) {
-		r.Use(
-			middleware.RateLimit(middleware.RateLimitConfig{
-				RequestsPerSecond: 100,
-				Burst:             200,
-				KeyFunc:           middleware.IPKeyFunc,
-			}),
-			middleware.JWT(middleware.JWTConfig{
-				SecretKey:  []byte(cfg.JWT.Secret),
-				Algorithm:  "HS256",
-				ContextKey: "claims",
-			}),
-		)
-		router.Mount(r, h)
-	})
-
-	// Step 13: start HTTP server
+	// Step 10: build HTTP server
 	srv := server.New(
 		server.WithAddr(cfg.Server.Addr),
 		server.WithReadTimeout(cfg.Server.ReadTimeout),
@@ -121,6 +87,38 @@ func main() {
 		server.WithShutdownTimeout(cfg.Server.ShutdownTimeout),
 	)
 
+	// Step 11: register global middleware on the server's router
+	srv.Use(
+		middleware.RequestID(),
+		middleware.TenantID(),
+		middleware.SecureHeaders(),
+		middleware.Logger(log),
+		middleware.Recovery(log),
+		middleware.CORS([]string{"*"}),
+		observability.Metrics(),
+	)
+
+	// Step 12: mount unauthenticated routes
+	srv.Mount("/health/live", healthHandler.LiveHandler())
+	srv.Mount("/health/ready", healthHandler.ReadyHandler())
+	srv.Mount("/metrics", observability.MetricsHandler())
+
+	// Step 13: mount authenticated + rate-limited service routes.
+	// Use an in-memory store for rate limiting (swap for ratelimit.NewRedisStore for
+	// distributed rate limiting in production).
+	rateLimitStore := ratelimit.NewInMemoryStore()
+	srv.Mount(h.Pattern(), middleware.RateLimit(middleware.RateLimitConfig{
+		RequestsPerSecond: 100,
+		Burst:             200,
+		KeyFunc:           middleware.IPKeyFunc,
+		Store:             rateLimitStore,
+	})(middleware.JWT(middleware.JWTConfig{
+		SecretKey:  []byte(cfg.JWT.Secret),
+		Algorithm:  "HS256",
+		ContextKey: "claims",
+	})(h.Router())))
+
+	// Step 14: start HTTP server
 	log.Info("starting server", zap.String("addr", cfg.Server.Addr))
 	if err := srv.Run(ctx); err != nil {
 		log.Fatal("server exited with error", zap.Error(err))
