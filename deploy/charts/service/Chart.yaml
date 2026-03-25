@@ -1,0 +1,15 @@
+apiVersion: v2
+name: service
+description: A Helm chart for deploying a Go microservice built from go-service-template
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - go
+  - microservice
+home: https://github.com/dhawalhost/go-service-template
+sources:
+  - https://github.com/dhawalhost/go-service-template
+maintainers:
+  - name: dhawalhost
+    url: https://github.com/dhawalhost
