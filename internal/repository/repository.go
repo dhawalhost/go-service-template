@@ -10,15 +10,30 @@ import (
 // Reader defines read-only data access methods.
 // RENAME_ME: rename Example to your entity name.
 type Reader interface {
+	// List returns paginated examples for a tenant with optional search filtering.
+	// Supports ILIKE pattern matching on the name field.
+	// Page and PageSize params control pagination; defaults to page 1, 20 items per page.
+	// Returns the list of examples, total count (excluding limit), and any error.
 	List(ctx context.Context, tenantID string, params ListParams) ([]Example, int64, error)
+	// GetByID retrieves a single example by ID and tenant.
+	// Returns NotFound error if not found or tenant mismatch.
 	GetByID(ctx context.Context, tenantID, id string) (*Example, error)
 }
 
 // Writer defines write data access methods.
 // RENAME_ME: rename Example to your entity name.
 type Writer interface {
+	// Create inserts a new example record.
+	// The example should have all required fields set (ID, Name, TenantID).
+	// Returns any database error (e.g., constraint violations).
 	Create(ctx context.Context, example *Example) error
+	// Update updates an existing example.
+	// The example must match both ID and TenantID for the update to succeed.
+	// Returns NotFound error if the example is not found.
 	Update(ctx context.Context, example *Example) error
+	// Delete soft-deletes an example by ID and tenant.
+	// Soft deletes use the DeletedAt field and don't remove the record from the database.
+	// Returns any database error.
 	Delete(ctx context.Context, tenantID, id string) error
 }
 
@@ -30,12 +45,15 @@ type Repository interface {
 
 // ListParams holds pagination and filter parameters.
 type ListParams struct {
-	Page     int
+	// Page is the page number (1-indexed). Defaults to 1.
+	Page int
+	// PageSize is the number of items per page. Defaults to 20.
 	PageSize int
-	Search   string
+	// Search is a substring to search for in the name field (case-insensitive).
+	Search string
 }
 
-// Example is the GORM/pgx model.
+// Example is the GORM/pgx model representing a resource.
 // RENAME_ME: rename to your entity name.
 type Example struct {
 	ID          string         `gorm:"primaryKey"     db:"id"`

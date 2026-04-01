@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -13,13 +14,30 @@ import (
 	"github.com/dhawalhost/go-service-template/internal/repository"
 )
 
-// Service defines the business logic interface.
+// Service defines the business logic interface for example operations.
+// It implements the cache-aside pattern for reads and optional tenant isolation.
 // RENAME_ME: replace Example with your domain entity.
 type Service interface {
+	// List returns paginated examples for a tenant with optional search filtering.
+	// Pass an empty tenantID to operate in single-tenant mode.
+	// Returns the list of examples, total count, and any error.
 	List(ctx context.Context, tenantID string, params ListParams) ([]Example, int64, error)
+	// Get retrieves a single example by ID for a given tenant.
+	// Pass an empty tenantID to operate in single-tenant mode.
+	// Uses cache-aside pattern: checks cache first, then database, then caches the result.
+	// Returns NotFound error if the example doesn't exist or belongs to a different tenant.
 	Get(ctx context.Context, tenantID, id string) (*Example, error)
+	// Create creates a new example for a tenant.
+	// Pass an empty tenantID to operate in single-tenant mode.
+	// Returns the created example with auto-generated ID and timestamps, or any error.
 	Create(ctx context.Context, tenantID string, req CreateRequest) (*Example, error)
+	// Update updates an existing example for a tenant and invalidates its cache.
+	// Pass an empty tenantID to operate in single-tenant mode.
+	// Returns NotFound error if the example doesn't exist or belongs to a different tenant.
 	Update(ctx context.Context, tenantID, id string, req UpdateRequest) (*Example, error)
+	// Delete deletes an example for a tenant and invalidates its cache.
+	// Pass an empty tenantID to operate in single-tenant mode.
+	// Returns NotFound error if the example doesn't exist or belongs to a different tenant.
 	Delete(ctx context.Context, tenantID, id string) error
 }
 
@@ -30,6 +48,10 @@ type svc struct {
 }
 
 // New creates a new Service instance with the given dependencies.
+// Dependencies:
+//   - repo: data access layer for persistent storage
+//   - cache: Redis cache for cache-aside pattern
+//   - log: structured logger
 func New(repo repository.Repository, cache cache.Cache, log *zap.Logger) Service {
 	return &svc{repo: repo, cache: cache, log: log}
 }
@@ -52,7 +74,7 @@ func (s *svc) List(ctx context.Context, tenantID string, params ListParams) ([]E
 }
 
 func (s *svc) Get(ctx context.Context, tenantID, id string) (*Example, error) {
-	cacheKey := "example:" + id
+	cacheKey := cacheKey(tenantID, id)
 
 	// 1. Try cache first (cache-aside pattern)
 	cached, err := s.cache.Get(ctx, cacheKey)
@@ -111,7 +133,7 @@ func (s *svc) Update(ctx context.Context, tenantID, id string, req UpdateRequest
 	}
 
 	// Invalidate cache
-	if cacheErr := s.cache.Delete(ctx, "example:"+id); cacheErr != nil {
+	if cacheErr := s.cache.Delete(ctx, cacheKey(tenantID, id)); cacheErr != nil {
 		s.log.Warn("failed to invalidate cache", zap.String("id", id), zap.Error(cacheErr))
 	}
 
@@ -125,7 +147,7 @@ func (s *svc) Delete(ctx context.Context, tenantID, id string) error {
 	}
 
 	// Invalidate cache
-	if cacheErr := s.cache.Delete(ctx, "example:"+id); cacheErr != nil {
+	if cacheErr := s.cache.Delete(ctx, cacheKey(tenantID, id)); cacheErr != nil {
 		s.log.Warn("failed to invalidate cache", zap.String("id", id), zap.Error(cacheErr))
 	}
 
@@ -142,6 +164,13 @@ func fromRepo(r repository.Example) Example {
 		CreatedAt:   r.CreatedAt,
 		UpdatedAt:   r.UpdatedAt,
 	}
+}
+
+func cacheKey(tenantID, id string) string {
+	if strings.TrimSpace(tenantID) == "" {
+		return "example:" + id
+	}
+	return "example:" + tenantID + ":" + id
 }
 
 // ensure svc satisfies Service at compile time.

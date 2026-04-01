@@ -3,7 +3,11 @@
 BINARY=./bin/server
 
 run: ## Run the service locally
-	go run ./cmd/server
+	@if [ ! -f .env ]; then \
+		echo "ERROR: .env file not found. Run: cp .env.example .env"; \
+		exit 1; \
+	fi
+	@set -a; . ./.env; set +a; go run ./cmd/server
 
 build: ## Build the binary
 	CGO_ENABLED=0 go build -ldflags="-s -w" -o $(BINARY) ./cmd/server

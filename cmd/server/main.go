@@ -94,7 +94,7 @@ func main() {
 		middleware.SecureHeaders(),
 		middleware.Logger(log),
 		middleware.Recovery(log),
-		middleware.CORS([]string{"*"}),
+		middleware.CORS(cfg.CORS.AllowedOrigins),
 		observability.Metrics(),
 	)
 

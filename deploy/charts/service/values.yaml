@@ -14,6 +14,11 @@ serviceAccount:
   annotations: {}
   name: ""
 
+rbac:
+  # Create RBAC resources (Role and RoleBinding) with least-privilege access
+  # Allows the deployment to read ConfigMaps and Secrets in the namespace
+  create: true
+
 podAnnotations:
   prometheus.io/scrape: "true"
   prometheus.io/port: "8080"
@@ -83,6 +88,16 @@ env:
   APP_LOG_LEVEL: "info"
   APP_LOG_DEVELOPMENT: "false"
   APP_TELEMETRY_ENABLED: "false"
+
+podDisruptionBudget:
+  # Enable PodDisruptionBudget to ensure service availability during cluster maintenance
+  # When enabled, Kubernetes will not voluntarily evict pods if it would violate the budget
+  enabled: true
+  # Minimum number of pods that must be available at all times
+  # Set to 1 when running with minReplicas: 2 (autoscaling.minReplicas)
+  minAvailable: 1
+  # Alternatively, set maximum number of pods that can be unavailable
+  # maxUnavailable: 1
 
 nodeSelector: {}
 tolerations: []

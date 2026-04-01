@@ -174,7 +174,11 @@ make vscode-setup
 make docker-run
 
 # OR run locally (requires postgres + redis already running)
+# make loads .env automatically when present
 make run
+
+# If running without make:
+# set -a; source .env; set +a; go run ./cmd/server
 ```
 
 **What `make vscode-setup` does:**

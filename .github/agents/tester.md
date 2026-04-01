@@ -13,7 +13,10 @@ You are a subagent for QA and testing. Invoked by the orchestrator only.
 ## Go Testing
 - Write table-driven tests using the standard `testing` package
 - Use `testify` for assertions where already used in the project
-- Mock interfaces using `mockery` or hand-rolled mocks
+- Mock interfaces using `mockery`, install if not present and also configure mockery files to be generated in respective package folders (e.g. `internal/repository/mocks`, `internal/service/mocks`)
+- Achieve comprehensive test coverage across service, handler, and repository layers
+- Focus on realistic test scenarios, including edge cases and error handling
+- Run tests with `go test ./...` to ensure all tests pass and check coverage with `go test ./... -cover`
 - Run `go test ./... -race` to check for race conditions
 
 ## General Responsibilities

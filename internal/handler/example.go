@@ -16,11 +16,13 @@ import (
 	"github.com/dhawalhost/go-service-template/internal/service"
 )
 
+// createRequest holds the data for creating a new example.
 type createRequest struct {
 	Name        string `json:"name"        validate:"required,min=1,max=255"`
 	Description string `json:"description" validate:"max=1000"`
 }
 
+// updateRequest holds the data for updating an existing example.
 type updateRequest struct {
 	Name        string `json:"name"        validate:"required,min=1,max=255"`
 	Description string `json:"description" validate:"max=1000"`
@@ -35,7 +37,11 @@ func tenantID(r *http.Request) string {
 	return tid
 }
 
-// List handles GET /api/v1/examples.
+// List handles GET /api/v1/examples and returns paginated examples.
+// Query parameters:
+//   - page: page number (default: 1)
+//   - page_size: number of items per page (default: 20)
+//   - search: search term to filter by name (substring match, case-insensitive)
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	reqID := middleware.RequestIDFromContext(r.Context())
 	tid := tenantID(r)
@@ -56,7 +62,11 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	response.Paginated(w, r, items, params.ToPagination(total))
 }
 
-// Get handles GET /api/v1/examples/{id}.
+// Get handles GET /api/v1/examples/{id} and returns a single example.
+// URL parameters:
+//   - id: the ID of the example to retrieve
+//
+// Returns 404 if the example is not found or belongs to a different tenant.
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	reqID := middleware.RequestIDFromContext(r.Context())
 	tid := tenantID(r)
@@ -72,7 +82,9 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	response.Ok(w, r, item)
 }
 
-// Create handles POST /api/v1/examples.
+// Create handles POST /api/v1/examples and creates a new example.
+// Request body should contain name and optional description fields.
+// Returns 201 Created with the created example.
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	reqID := middleware.RequestIDFromContext(r.Context())
 	tid := tenantID(r)
@@ -101,7 +113,12 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	response.Created(w, r, item)
 }
 
-// Update handles PUT /api/v1/examples/{id}.
+// Update handles PUT /api/v1/examples/{id} and updates an existing example.
+// URL parameters:
+//   - id: the ID of the example to update
+//
+// Request body should contain name and optional description fields.
+// Returns 404 if the example is not found or belongs to a different tenant.
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	reqID := middleware.RequestIDFromContext(r.Context())
 	tid := tenantID(r)
@@ -131,7 +148,12 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	response.Ok(w, r, item)
 }
 
-// Delete handles DELETE /api/v1/examples/{id}.
+// Delete handles DELETE /api/v1/examples/{id} and deletes an example.
+// URL parameters:
+//   - id: the ID of the example to delete
+//
+// Returns 204 No Content on success.
+// Returns 404 if the example is not found or belongs to a different tenant.
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	reqID := middleware.RequestIDFromContext(r.Context())
 	tid := tenantID(r)

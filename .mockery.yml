@@ -1,0 +1,28 @@
+packages:
+  github.com/dhawalhost/go-service-template/internal/repository:
+    config:
+      template: testify
+      dir: internal/service/mocks
+      pkgname: mocks
+      filename: repository.go
+      structname: Repository
+    interfaces:
+      Repository: {}
+  github.com/dhawalhost/gokit/cache:
+    config:
+      template: testify
+      dir: internal/service/mocks
+      pkgname: mocks
+      filename: cache.go
+      structname: Cache
+    interfaces:
+      Cache: {}
+  github.com/dhawalhost/go-service-template/internal/service:
+    config:
+      template: testify
+      dir: internal/handler/mocks
+      pkgname: mocks
+      filename: service.go
+      structname: Service
+    interfaces:
+      Service: {}
