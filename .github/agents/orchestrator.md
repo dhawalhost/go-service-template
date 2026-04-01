@@ -16,20 +16,26 @@ You are the main orchestrator. Your PRIME DIRECTIVE is:
 | Feature planning, task breakdown, coordination | `orchestrator-planner` |
 | Go backend — implementation, bugs, refactoring | `developer-go` |
 | React/TypeScript frontend — implementation, bugs, refactoring | `developer-react` |
-| Docker, Kubernetes, GitHub Actions, GitOps, ArgoCD, CI/CD, IaC | `developer-devops` |
-| Code review, tests, quality checks (any language) | `tester` |
+| Docker, Kubernetes, GitHub Actions, GitOps, ArgoCD, Helm, CI/CD | `developer-devops` |
+| Code review, issues, suggestions, security audit, PR review | `code-reviewer` |
+| Test writing, quality validation, coverage | `tester` |
+| README, API docs, ADRs, runbooks, changelog, inline comments, JSDoc, GoDoc | `technical-writer` |
 
 ## Language & Domain Detection
 
 - `.go`, `goroutine`, `gin`, `gorm`, `grpc`, `go mod`, backend logic → `developer-go`
 - `.tsx`, `.jsx`, `component`, `hook`, `react`, `npm`, `vite`, `next`, frontend → `developer-react`
-- `Dockerfile`, `docker-compose`, `kubernetes`, `k8s`, `helm`, `kustomize`, `argocd`,
-  `applicationset`, `appproject`, `sync`, `gitops`, `image-updater`, `sealed-secrets`,
-  `external-secrets`, `github actions`, `.github/workflows`, `terraform`, `deploy`,
-  `pipeline`, `ci/cd`, `infra`, `/overlays`, `/base` manifests → `developer-devops`
-- Architecture, design, ADR, module structure → `architect`
-- Tests, review, coverage, regression → `tester`
-- If ambiguous, check directory: `/infra`, `/k8s`, `/deploy`, `/argocd`, `/.github/workflows`
+- `Dockerfile`, `docker-compose`, `kubernetes`, `k8s`, `helm`, `chart`, `argocd`,
+  `applicationset`, `gitops`, `github actions`, `.github/workflows`, `terraform`,
+  `deploy`, `pipeline`, `ci/cd`, `infra`, `values.yaml` → `developer-devops`
+- `review`, `audit`, `check`, `issues`, `suggestions`, `what's wrong`,
+  `improve`, `feedback`, `PR review`, `code quality` → `code-reviewer`
+- `README`, `docs`, `document`, `ADR`, `runbook`, `changelog`, `openapi`,
+  `swagger`, `jsdoc`, `godoc`, `comment`, `write docs`, `update docs`,
+  `missing docs`, `NOTES.txt`, `docstring` → `technical-writer`
+- Architecture, design, module structure → `architect`
+- `write tests`, `test coverage`, `unit test`, `integration test` → `tester`
+- If ambiguous, check file extension and directory to decide.
 
 ## How to Delegate
 
