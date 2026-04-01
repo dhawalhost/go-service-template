@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	kitconfig "github.com/dhawalhost/gokit/config"
@@ -13,7 +14,8 @@ import (
 // RENAME_ME: Add your own service-specific config sections here.
 type Config struct {
 	kitconfig.Config `mapstructure:",squash"`
-	CORS             CORSConfig `mapstructure:"cors"`
+	CORS             CORSConfig    `mapstructure:"cors"`
+	Tenancy          TenancyConfig `mapstructure:"tenancy"`
 }
 
 // CORSConfig holds CORS middleware configuration.
@@ -22,6 +24,14 @@ type CORSConfig struct {
 	// Example: ["https://example.com", "https://app.example.com"]
 	// Leave empty to restrict all CORS requests.
 	AllowedOrigins []string `mapstructure:"allowed_origins" yaml:"allowed_origins"`
+}
+
+// TenancyConfig controls optional tenant scoping for request handling and data access.
+type TenancyConfig struct {
+	// Enabled turns on tenant extraction and tenant-scoped repository filters.
+	Enabled bool `mapstructure:"enabled" yaml:"enabled"`
+	// DefaultTenantID is used when tenancy is enabled but the request carries no tenant ID.
+	DefaultTenantID string `mapstructure:"default_tenant_id" yaml:"default_tenant_id"`
 }
 
 // Load reads config from a YAML file (APP_CONFIG_FILE env var) and/or
@@ -41,15 +51,26 @@ func Load() (*Config, error) {
 	cfg := &Config{Config: *base}
 
 	if strings.TrimSpace(cfgFile) != "" {
-		origins, err := loadCORSOriginsFromYAML(cfgFile)
+		overrides, err := loadOverridesFromYAML(cfgFile)
 		if err != nil {
 			return nil, err
 		}
-		cfg.CORS.AllowedOrigins = origins
+		cfg.CORS = overrides.CORS
+		cfg.Tenancy = overrides.Tenancy
 	}
 
 	if raw, ok := os.LookupEnv("APP_CORS_ALLOWED_ORIGINS"); ok {
 		cfg.CORS.AllowedOrigins = parseCSV(raw)
+	}
+	if raw, ok := os.LookupEnv("APP_TENANCY_ENABLED"); ok {
+		enabled, err := strconv.ParseBool(strings.TrimSpace(raw))
+		if err != nil {
+			return nil, fmt.Errorf("config: parse APP_TENANCY_ENABLED: %w", err)
+		}
+		cfg.Tenancy.Enabled = enabled
+	}
+	if raw, ok := os.LookupEnv("APP_TENANCY_DEFAULT_TENANT_ID"); ok {
+		cfg.Tenancy.DefaultTenantID = strings.TrimSpace(raw)
 	}
 
 	// Fallback for env-only runs where Viper Unmarshal misses undefaulted keys.
@@ -62,14 +83,16 @@ func Load() (*Config, error) {
 	if strings.TrimSpace(cfg.Database.DSN) == "" {
 		return nil, fmt.Errorf("config: APP_DATABASE_DSN is required; set APP_CONFIG_FILE or export APP_DATABASE_DSN")
 	}
+	cfg.Tenancy = normalizeTenancy(cfg.Tenancy)
 	return cfg, nil
 }
 
 type yamlConfig struct {
-	CORS CORSConfig `yaml:"cors"`
+	CORS    CORSConfig    `yaml:"cors"`
+	Tenancy TenancyConfig `yaml:"tenancy"`
 }
 
-func loadCORSOriginsFromYAML(path string) ([]string, error) {
+func loadOverridesFromYAML(path string) (*yamlConfig, error) {
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("config: read APP_CONFIG_FILE: %w", err)
@@ -80,7 +103,7 @@ func loadCORSOriginsFromYAML(path string) ([]string, error) {
 		return nil, fmt.Errorf("config: parse APP_CONFIG_FILE: %w", err)
 	}
 
-	return cfg.CORS.AllowedOrigins, nil
+	return &cfg, nil
 }
 
 func parseCSV(value string) []string {
@@ -94,6 +117,13 @@ func parseCSV(value string) []string {
 		origins = append(origins, part)
 	}
 	return origins
+}
+
+func normalizeTenancy(cfg TenancyConfig) TenancyConfig {
+	if cfg.Enabled && strings.TrimSpace(cfg.DefaultTenantID) == "" {
+		cfg.DefaultTenantID = "default"
+	}
+	return cfg
 }
 
 // MustLoad is a helper that panics on config load error, for use in main() where we want to fail fast.

@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -17,12 +18,17 @@ type pgxRepo struct{ pool *pgxpool.Pool }
 func NewPgx(pool *pgxpool.Pool) Reader { return &pgxRepo{pool: pool} }
 
 func (r *pgxRepo) List(ctx context.Context, tenantID string, params ListParams) ([]Example, int64, error) {
-	args := []any{tenantID}
-	where := `WHERE tenant_id=$1 AND deleted_at IS NULL`
+	args := make([]any, 0, 3)
+	clauses := []string{"deleted_at IS NULL"}
+	if strings.TrimSpace(tenantID) != "" {
+		args = append(args, tenantID)
+		clauses = append(clauses, fmt.Sprintf("tenant_id=$%d", len(args)))
+	}
 	if params.Search != "" {
 		args = append(args, "%"+params.Search+"%")
-		where += ` AND name ILIKE $2`
+		clauses = append(clauses, fmt.Sprintf("name ILIKE $%d", len(args)))
 	}
+	where := "WHERE " + strings.Join(clauses, " AND ")
 
 	var total int64
 	if err := r.pool.QueryRow(ctx,
@@ -64,10 +70,16 @@ func (r *pgxRepo) List(ctx context.Context, tenantID string, params ListParams) 
 }
 
 func (r *pgxRepo) GetByID(ctx context.Context, tenantID, id string) (*Example, error) {
+	args := []any{id}
+	where := `WHERE id=$1 AND deleted_at IS NULL`
+	if strings.TrimSpace(tenantID) != "" {
+		args = append(args, tenantID)
+		where += fmt.Sprintf(" AND tenant_id=$%d", len(args))
+	}
 	rows, err := r.pool.Query(ctx,
 		`SELECT id, name, description, tenant_id, created_at, updated_at
-		 FROM examples WHERE id=$1 AND tenant_id=$2 AND deleted_at IS NULL`,
-		id, tenantID,
+		 FROM examples `+where,
+		args...,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("pgxRepo.GetByID query: %w", err)

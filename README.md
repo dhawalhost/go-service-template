@@ -31,6 +31,7 @@ This template includes everything needed for production microservices:
 - **Dependency injection** for clean code and easy testing
 - **Interface-based design** for swappable implementations
 - **Cache-aside pattern** for high-performance reads
+- **Optional tenancy support** that can be enabled for multi-tenant services or left off for single-tenant services
 
 ### 🔄 Data Access
 - **GORM** for write operations (CREATE, UPDATE, DELETE with transactions)
@@ -78,7 +79,7 @@ This template includes everything needed for production microservices:
 HTTP Request
      │
      ▼
-Global Middleware (RequestID, Logger, Recovery, CORS, RateLimit, JWT)
+Global Middleware (RequestID, optional TenantID, Logger, Recovery, CORS, RateLimit, JWT)
      │
      ▼
 Handler (internal/handler/) — HTTP parsing, validation, response writing

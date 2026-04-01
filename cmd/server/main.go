@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -71,7 +72,7 @@ func main() {
 	// Wire dependency graph: repo -> service -> handler.
 	repo := repository.NewPostgres(db.GORM)
 	svc := service.New(repo, redisCache, log)
-	h := handler.New(svc, log)
+	h := handler.New(svc, log, cfg.Tenancy.Enabled, cfg.Tenancy.DefaultTenantID)
 
 	// Set up health checks.
 	healthHandler := health.NewHandler()
@@ -88,15 +89,20 @@ func main() {
 	)
 
 	// Register global middleware.
-	srv.Use(
+	middlewares := []func(http.Handler) http.Handler{
 		middleware.RequestID(),
-		middleware.TenantID(),
 		middleware.SecureHeaders(),
 		middleware.Logger(log),
 		middleware.Recovery(log),
 		middleware.CORS(cfg.CORS.AllowedOrigins),
 		observability.Metrics(),
-	)
+	}
+	if cfg.Tenancy.Enabled {
+		middlewares = append(middlewares[:1], append([]func(http.Handler) http.Handler{
+			middleware.TenantID(),
+		}, middlewares[1:]...)...)
+	}
+	srv.Use(middlewares...)
 
 	// Mount unauthenticated routes.
 	srv.Mount("/health/live", healthHandler.LiveHandler())

@@ -3,6 +3,8 @@ package repository
 import (
 	"context"
 	"errors"
+	"strconv"
+	"strings"
 
 	gokiterrors "github.com/dhawalhost/gokit/errors"
 	"gorm.io/gorm"
@@ -24,13 +26,13 @@ func NewPostgres(db *gorm.DB) Repository { return &postgresRepo{db: db} }
 
 func (r *postgresRepo) List(ctx context.Context, tenantID string, params ListParams) ([]Example, int64, error) {
 	var total int64
-	query := r.db.WithContext(ctx).Model(&Example{}).Where("tenant_id = ?", tenantID)
+	query := tenantScopedQuery(r.db.WithContext(ctx).Model(&Example{}), tenantID)
 
 	// Validate and limit search query length to prevent expensive LIKE queries
 	if params.Search != "" {
 		if len(params.Search) > MaxSearchLength {
 			return nil, 0, gokiterrors.BadRequest("SEARCH_TOO_LONG",
-				"search query too long (max "+string(rune(MaxSearchLength))+" characters)")
+				"search query too long (max "+strconv.Itoa(MaxSearchLength)+" characters)")
 		}
 		query = query.Where("name ILIKE ?", "%"+params.Search+"%")
 	}
@@ -63,8 +65,8 @@ func (r *postgresRepo) List(ctx context.Context, tenantID string, params ListPar
 
 func (r *postgresRepo) GetByID(ctx context.Context, tenantID, id string) (*Example, error) {
 	var row Example
-	err := r.db.WithContext(ctx).
-		Where("id = ? AND tenant_id = ?", id, tenantID).
+	err := tenantScopedQuery(r.db.WithContext(ctx), tenantID).
+		Where("id = ?", id).
 		First(&row).Error
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -82,9 +84,11 @@ func (r *postgresRepo) Create(ctx context.Context, example *Example) error {
 }
 
 func (r *postgresRepo) Update(ctx context.Context, example *Example) error {
-	result := r.db.WithContext(ctx).
-		Where("id = ? AND tenant_id = ?", example.ID, example.TenantID).
-		Save(example)
+	query := r.db.WithContext(ctx).Where("id = ?", example.ID)
+	if strings.TrimSpace(example.TenantID) != "" {
+		query = query.Where("tenant_id = ?", example.TenantID)
+	}
+	result := query.Save(example)
 
 	if result.Error != nil {
 		return result.Error
@@ -99,9 +103,23 @@ func (r *postgresRepo) Update(ctx context.Context, example *Example) error {
 }
 
 func (r *postgresRepo) Delete(ctx context.Context, tenantID, id string) error {
-	return r.db.WithContext(ctx).
-		Where("id = ? AND tenant_id = ?", id, tenantID).
-		Delete(&Example{}).Error
+	result := tenantScopedQuery(r.db.WithContext(ctx), tenantID).
+		Where("id = ?", id).
+		Delete(&Example{})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gokiterrors.NotFound("EXAMPLE_NOT_FOUND", "example not found")
+	}
+	return nil
+}
+
+func tenantScopedQuery(query *gorm.DB, tenantID string) *gorm.DB {
+	if strings.TrimSpace(tenantID) == "" {
+		return query
+	}
+	return query.Where("tenant_id = ?", tenantID)
 }
 
 // ensure postgresRepo satisfies Repository at compile time.

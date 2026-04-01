@@ -11,11 +11,13 @@ import (
 // RENAME_ME: rename Example to your entity name.
 type Reader interface {
 	// List returns paginated examples for a tenant with optional search filtering.
+	// When tenantID is empty, no tenant filter is applied.
 	// Supports ILIKE pattern matching on the name field.
 	// Page and PageSize params control pagination; defaults to page 1, 20 items per page.
 	// Returns the list of examples, total count (excluding limit), and any error.
 	List(ctx context.Context, tenantID string, params ListParams) ([]Example, int64, error)
 	// GetByID retrieves a single example by ID and tenant.
+	// When tenantID is empty, no tenant filter is applied.
 	// Returns NotFound error if not found or tenant mismatch.
 	GetByID(ctx context.Context, tenantID, id string) (*Example, error)
 }
@@ -32,6 +34,7 @@ type Writer interface {
 	// Returns NotFound error if the example is not found.
 	Update(ctx context.Context, example *Example) error
 	// Delete soft-deletes an example by ID and tenant.
+	// When tenantID is empty, no tenant filter is applied.
 	// Soft deletes use the DeletedAt field and don't remove the record from the database.
 	// Returns any database error.
 	Delete(ctx context.Context, tenantID, id string) error

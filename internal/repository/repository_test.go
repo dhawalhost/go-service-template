@@ -89,3 +89,31 @@ func TestPostgresRepo_ListSearchLengthGuard(t *testing.T) {
 	assert.Nil(t, items)
 	assert.Equal(t, int64(0), total)
 }
+
+func TestPostgresRepo_SingleTenantQueriesIgnoreTenantFilter(t *testing.T) {
+	db := setupTestDB(t)
+	repo := NewPostgres(db)
+	ctx := context.Background()
+
+	assert.NoError(t, repo.Create(ctx, &Example{ID: "id-1", Name: "One"}))
+	assert.NoError(t, repo.Create(ctx, &Example{ID: "id-2", Name: "Two"}))
+
+	items, total, err := repo.List(ctx, "", ListParams{Page: 1, PageSize: 10})
+	assert.NoError(t, err)
+	assert.Len(t, items, 2)
+	assert.Equal(t, int64(2), total)
+
+	item, err := repo.GetByID(ctx, "", "id-1")
+	assert.NoError(t, err)
+	assert.Equal(t, "One", item.Name)
+
+	assert.NoError(t, repo.Delete(ctx, "", "id-2"))
+}
+
+func TestPostgresRepo_DeleteMissingReturnsNotFound(t *testing.T) {
+	db := setupTestDB(t)
+	repo := NewPostgres(db)
+
+	err := repo.Delete(context.Background(), "tenant-1", "missing")
+	assert.Error(t, err)
+}

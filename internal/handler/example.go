@@ -28,15 +28,6 @@ type updateRequest struct {
 	Description string `json:"description" validate:"max=1000"`
 }
 
-// tenantID extracts the tenant ID from context, defaulting to "default".
-func tenantID(r *http.Request) string {
-	tid, ok := middleware.TenantIDFromContext(r.Context())
-	if !ok {
-		return "default"
-	}
-	return tid
-}
-
 // List handles GET /api/v1/examples and returns paginated examples.
 // Query parameters:
 //   - page: page number (default: 1)
@@ -44,7 +35,7 @@ func tenantID(r *http.Request) string {
 //   - search: search term to filter by name (substring match, case-insensitive)
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	reqID := middleware.RequestIDFromContext(r.Context())
-	tid := tenantID(r)
+	tid := h.tenantID(r)
 
 	params := pagination.ParseOffsetParams(r)
 
@@ -69,7 +60,7 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 // Returns 404 if the example is not found or belongs to a different tenant.
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	reqID := middleware.RequestIDFromContext(r.Context())
-	tid := tenantID(r)
+	tid := h.tenantID(r)
 	id := chi.URLParam(r, "id")
 
 	item, err := h.svc.Get(r.Context(), tid, id)
@@ -87,7 +78,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 // Returns 201 Created with the created example.
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	reqID := middleware.RequestIDFromContext(r.Context())
-	tid := tenantID(r)
+	tid := h.tenantID(r)
 
 	var req createRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -121,7 +112,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 // Returns 404 if the example is not found or belongs to a different tenant.
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	reqID := middleware.RequestIDFromContext(r.Context())
-	tid := tenantID(r)
+	tid := h.tenantID(r)
 	id := chi.URLParam(r, "id")
 
 	var req updateRequest
@@ -156,7 +147,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 // Returns 404 if the example is not found or belongs to a different tenant.
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	reqID := middleware.RequestIDFromContext(r.Context())
-	tid := tenantID(r)
+	tid := h.tenantID(r)
 	id := chi.URLParam(r, "id")
 
 	if err := h.svc.Delete(r.Context(), tid, id); err != nil {
