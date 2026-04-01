@@ -101,12 +101,28 @@ cd my-service
 # 2. Copy environment config
 cp .env.example .env
 
-# 3. Start the full local stack (app + postgres + redis + prometheus + grafana)
+# 3. Bootstrap VS Code + MCP prerequisites (uv/node) and recommended extensions
+make vscode-setup
+
+# 4. Start the full local stack (app + postgres + redis + prometheus + grafana)
 make docker-run
 
 # OR run locally (requires postgres + redis already running)
 make run
 ```
+
+`make vscode-setup` installs:
+- Runtime tools used by `.vscode/mcp.json` (`uv` for `fetch`, `npx` via Node for `memory`)
+- Recommended VS Code extensions from `.vscode/extensions.json`
+
+Cross-platform setup commands:
+- macOS/Linux: `bash scripts/setup-vscode.sh`
+- Windows (PowerShell): `powershell -ExecutionPolicy Bypass -File scripts/setup-vscode.ps1`
+
+On Linux, `scripts/setup-vscode.sh` automatically detects package managers (`apt-get`, `dnf`, `yum`, `pacman`, `zypper`) for installing dependencies.
+On Windows, `scripts/setup-vscode.ps1` installs dependencies via `winget` when available.
+
+If `code` CLI is missing, open VS Code and run: `Shell Command: Install 'code' command in PATH`, then rerun `make vscode-setup`.
 
 The service will be available at:
 - **API**: http://localhost:8080

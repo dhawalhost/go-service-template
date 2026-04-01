@@ -1,4 +1,4 @@
-.PHONY: run build test lint fmt vet tidy migrate-up migrate-down docker-build docker-run help
+.PHONY: run build test lint fmt vet tidy migrate-up migrate-down docker-build docker-run vscode-setup vscode-setup-help help
 
 BINARY=./bin/server
 
@@ -34,6 +34,13 @@ docker-build: ## Build Docker image
 
 docker-run: ## Start full local stack via docker compose
 	docker compose -f deploy/docker-compose.yml up --build
+
+vscode-setup: ## Install VS Code + MCP prerequisites and recommended extensions
+	@bash scripts/setup-vscode.sh
+
+vscode-setup-help: ## Show cross-platform VS Code setup commands
+	@echo "macOS/Linux: bash scripts/setup-vscode.sh"
+	@echo "Windows (PowerShell): powershell -ExecutionPolicy Bypass -File scripts/setup-vscode.ps1"
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
