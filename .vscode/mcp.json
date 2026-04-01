@@ -2,8 +2,7 @@
   "servers": {
     "github": {
       "type": "http",
-      "url": "https://api.githubcopilot.com/mcp/",
-      "tools": ["*"]
+      "url": "https://api.githubcopilot.com/mcp/"
     },
     "fetch": {
       "command": "uvx",
@@ -13,6 +12,5 @@
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-memory"]
     }
-  },
-  "chat.mcp.discovery.enabled": true
+  }
 }

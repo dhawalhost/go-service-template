@@ -16,12 +16,6 @@ You are a subagent for QA and testing. Invoked by the orchestrator only.
 - Mock interfaces using `mockery` or hand-rolled mocks
 - Run `go test ./... -race` to check for race conditions
 
-## React Testing
-- Write tests using React Testing Library + Jest
-- Test user interactions, not implementation details
-- Mock API calls using `msw` (Mock Service Worker)
-- Check accessibility with `jest-axe`
-
 ## General Responsibilities
 - Review Copilot/agent changes for bugs and regressions
 - Identify untested code paths
