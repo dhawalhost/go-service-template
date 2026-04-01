@@ -4,9 +4,75 @@ A production-ready **GitHub template repository** for spinning up new Go microse
 
 > **How to use**: Click the **"Use this template"** button on GitHub, clone your new repo, follow the [quick start](#quick-start) steps, and rename the placeholders marked with `RENAME_ME` comments.
 
+## Documentation Index
+
+Comprehensive guides for every aspect of developing with this template:
+
+| Guide | Purpose |
+|---|---|
+| **[DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md)** | 👨‍💻 Complete development workflow — setup, testing, debugging, common tasks |
+| **[VS_CODE_SETUP.md](VS_CODE_SETUP.md)** | 🚀 AI-assisted development with VS Code, GitHub Copilot, and MCP integration |
+| **[CONTRIBUTING.md](CONTRIBUTING.md)** | 🤝 Contribution guidelines — code standards, PR process, code review |
+| **[ARCHITECTURE.md](ARCHITECTURE.md)** | 🏗️ Design patterns and architectural decisions — layering, DI, caching, database |
+| **[TESTING.md](TESTING.md)** | ✅ Testing strategies — unit tests, integration tests, mocking, coverage |
+| **[DEPLOYMENT.md](DEPLOYMENT.md)** | 🚢 Production deployment — Docker, Kubernetes, cloud platforms, migrations |
+| **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** | 🔧 Common issues and solutions — setup, development, testing, deployment |
+
+**New to the project?** Start with [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) for a comprehensive walkthrough.
+
 ---
 
-## Architecture
+## Production-Ready Features
+
+This template includes everything needed for production microservices:
+
+### 🏗️ Architecture
+- **Layered architecture** (Handler → Service → Repository) for testability and maintainability
+- **Dependency injection** for clean code and easy testing
+- **Interface-based design** for swappable implementations
+- **Cache-aside pattern** for high-performance reads
+
+### 🔄 Data Access
+- **GORM** for write operations (CREATE, UPDATE, DELETE with transactions)
+- **pgx/v5** for optimized read queries
+- **PostgreSQL migrations** with automatic execution on startup
+- **Redis caching** with configurable TTLs
+
+### 📡 Observability
+- **Structured logging** with `zap` (automatic request ID tracking)
+- **Prometheus metrics** (HTTP, database, Redis)
+- **OpenTelemetry tracing** (optional)
+- **Health check endpoints** (liveness & readiness probes)
+- **Grafana dashboards** pre-configured
+
+### 🔐 Security
+- **JWT authentication** with configurable expiry
+- **CORS middleware** to prevent cross-origin attacks
+- **Rate limiting** to prevent abuse
+- **Input validation** patterns throughout
+- **SQL injection prevention** via parameterized queries
+
+### 🧪 Testing
+- **Table-driven tests** for comprehensive coverage
+- **Mock patterns** for unit testing without dependencies
+- **Integration test helpers** for database testing
+- **Test Docker Compose** stack for CI/CD
+
+### 📦 DevOps
+- **GitHub Actions** for CI (lint, vet, test)
+- **Automated Docker builds** and registry pushes
+- **Helm charts** for Kubernetes deployment
+- **HPA (Horizontal Pod Autoscaling)** configured
+- **Multi-stage Docker builds** for minimal image size
+
+### 🚀 Developer Experience
+- **VS Code setup automation** (`make vscode-setup`)
+- **GitHub Copilot integration** with MCP servers
+- **Pre-commit hooks** for code quality
+- **Makefile targets** for common tasks
+- **Comprehensive documentation** (this guide + 6 additional guides)
+
+---
 
 ```
 HTTP Request
@@ -111,20 +177,21 @@ make docker-run
 make run
 ```
 
-`make vscode-setup` installs:
-- Runtime tools used by `.vscode/mcp.json` (`uv` for `fetch`, `npx` via Node for `memory`)
-- Recommended VS Code extensions from `.vscode/extensions.json`
+**What `make vscode-setup` does:**
+- ✓ Installs `uv` (Python package manager for MCP fetch server)
+- ✓ Installs `Node.js` (for MCP memory server)
+- ✓ Installs recommended VS Code extensions (Go, Copilot, Docker, YAML)
+- ✓ Sets up pre-commit Git hooks for code quality
 
-Cross-platform setup commands:
+See **[VS_CODE_SETUP.md](VS_CODE_SETUP.md)** for detailed guidance on VS Code integration, GitHub Copilot setup, and using AI agents for development.
+
+**Cross-platform setup:**
 - macOS/Linux: `bash scripts/setup-vscode.sh`
 - Windows (PowerShell): `powershell -ExecutionPolicy Bypass -File scripts/setup-vscode.ps1`
 
-On Linux, `scripts/setup-vscode.sh` automatically detects package managers (`apt-get`, `dnf`, `yum`, `pacman`, `zypper`) for installing dependencies.
-On Windows, `scripts/setup-vscode.ps1` installs dependencies via `winget` when available.
+If `code` CLI is missing, run: `Cmd+Shift+P` → `Shell Command: Install 'code' command in PATH`.
 
-If `code` CLI is missing, open VS Code and run: `Shell Command: Install 'code' command in PATH`, then rerun `make vscode-setup`.
-
-The service will be available at:
+**The service will be available at:**
 - **API**: http://localhost:8080
 - **Metrics**: http://localhost:8080/metrics
 - **Prometheus**: http://localhost:9090
@@ -298,6 +365,8 @@ Key Helm values to override:
 | `image.tag` | Docker image tag |
 | `autoscaling.enabled` | Enable HPA (default: `true`) |
 | `ingress.enabled` | Enable Ingress (default: `false`) |
+
+**See [DEPLOYMENT.md](DEPLOYMENT.md) for comprehensive deployment guide covering Docker, Kubernetes, AWS, GCP, Azure, and production best practices.**
 | `env.*` | Environment variables (mounted via ConfigMap) |
 
 ---
@@ -324,7 +393,62 @@ git push origin v1.0.0
 
 ---
 
-## gokit
+## Getting Help
+
+### 🆘 I'm stuck!
+
+Before opening an issue:
+
+1. **Check [TROUBLESHOOTING.md](TROUBLESHOOTING.md)** — Most common issues are documented with solutions
+2. **Read [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md)** — Comprehensive development guide with examples
+3. **Try the AI agent** — In VS Code: `Cmd+Shift+I` → Ask Copilot with `@developer-go`
+
+**Still stuck?** Open a GitHub Issue with:
+- Exact error message
+- Steps to reproduce
+- Your OS and Go version (`go version`)
+- Relevant logs or output
+
+### 📚 Learning Paths
+
+**I'm new to Go:**
+1. [Go Tour](https://go.dev/tour/welcome/1) (interactive)
+2. [Effective Go](https://go.dev/doc/effective_go) (best practices)
+3. This template's [ARCHITECTURE.md](ARCHITECTURE.md) (patterns used here)
+
+**I want to understand the template:**
+1. Start with [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md)
+2. Review [ARCHITECTURE.md](ARCHITECTURE.md) for design patterns
+3. Look at `internal/handler/example.go` for endpoint implementation pattern
+4. Study `internal/service/example.go` for business logic pattern
+5. Check `internal/repository/postgres.go` for data access pattern
+
+**I'm ready to contribute:**
+1. Read [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines
+2. Check [DEVELOPMENT_GUIDE.md](DEVELOPER_GUIDE.md) for development workflow
+3. Review [TESTING.md](TESTING.md) for test requirements
+4. See [ARCHITECTURE.md](ARCHITECTURE.md) for design decisions
+
+**I'm deploying to production:**
+1. Follow [DEPLOYMENT.md](DEPLOYMENT.md) for step-by-step guide
+2. Review config in [Configuration](#configuration) section
+3. Set up monitoring and alerting
+4. Test rollback procedure (documented in DEPLOYMENT.md)
+
+### 💡 Quick Reference
+
+| Task | Command | Reference | 
+|---|---|---|
+| Run the service | `make run` | [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md#running-the-service) |
+| Run tests | `make test` | [TESTING.md](TESTING.md#running-tests) |
+| Code quality checks | `make fmt lint vet` | [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md#code-formatting--linting) |
+| Format code | `make fmt` | [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md#code-formatting--linting) |
+| Add a feature | See DEVELOPER_GUIDE | [CONTRIBUTING.md](CONTRIBUTING.md#3-implement-changes) |
+| Deploy to Kubernetes | `helm install` | [DEPLOYMENT.md](DEPLOYMENT.md#helm-recommended) |
+| Debug an issue | Check TROUBLESHOOTING.md | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) |
+| Setup VS Code | `make vscode-setup` | [VS_CODE_SETUP.md](VS_CODE_SETUP.md) |
+
+---
 
 This template is built on [`github.com/dhawalhost/gokit`](https://github.com/dhawalhost/gokit), a shared Go library providing:
 
